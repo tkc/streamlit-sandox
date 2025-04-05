@@ -1,12 +1,10 @@
 import time
 
-import structlog  # Import structlog for contextvars
+import structlog 
 from pydantic import ValidationError
 
 from model import GreetingInput, GreetingOutput  # Import from model within src
 
-# Get logger instance configured in app.py
-# Logs will go to console and app.log
 log = structlog.get_logger(__name__) # Get logger by name
 
 def generate_greeting(input_message: str, processing_id: str) -> dict:
@@ -21,7 +19,6 @@ def generate_greeting(input_message: str, processing_id: str) -> dict:
         dict: GreetingOutput モデルに対応する辞書。エラー時は status='error' を含む。
     """
     structlog.contextvars.bind_contextvars(processing_id=processing_id)
-    # Log will include processing_id
     log.info("generate_greeting called", input_message=input_message)
     input_msg_for_output = input_message # Use original input for output model
     input_data_dict: dict = {} # Initialize dict for potential error logging
@@ -85,7 +82,6 @@ def generate_greeting(input_message: str, processing_id: str) -> dict:
         structlog.contextvars.clear_contextvars() # Clear context on error
         return result_dict
     except Exception as e:
-        # その他の予期せぬエラー
         # Log includes processing_id
         log.exception("Unexpected error occurred in generate_greeting")
         error_output = GreetingOutput(
@@ -98,5 +94,3 @@ def generate_greeting(input_message: str, processing_id: str) -> dict:
         structlog.contextvars.clear_contextvars() # Clear context on exception
         return result_dict
 
-# Removed the main() function and if __name__ == "__main__": block
-# as this module is now intended to be imported.

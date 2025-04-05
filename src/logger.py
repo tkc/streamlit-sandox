@@ -4,7 +4,6 @@ import sys
 
 import structlog  # type: ignore
 
-# Go up one level from src
 LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "log")
 
 def configure_logging(log_file_name="app.log"):
@@ -23,20 +22,17 @@ def configure_logging(log_file_name="app.log"):
     # Ensure log directory exists
     os.makedirs(LOG_DIR, exist_ok=True)
 
-    # Configure standard logging to redirect to structlog
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout, # Default to stdout, handlers will manage destinations
         level=logging.INFO,
     )
 
-    # Configure structlog processors
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
             structlog.stdlib.add_logger_name,
             structlog.stdlib.add_log_level,
-            # Add callsite parameters (filename, lineno)
             structlog.processors.CallsiteParameterAdder(
                 {
                     structlog.processors.CallsiteParameter.PATHNAME,
@@ -44,7 +40,6 @@ def configure_logging(log_file_name="app.log"):
                 }
             ),
             structlog.stdlib.PositionalArgumentsFormatter(),
-            # Use local time
             structlog.processors.TimeStamper(
                 fmt="%Y-%m-%d %H:%M:%S.%f", utc=False
             ),
@@ -53,7 +48,6 @@ def configure_logging(log_file_name="app.log"):
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
 

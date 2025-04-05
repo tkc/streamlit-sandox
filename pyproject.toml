@@ -4,12 +4,6 @@ version = "0.1.0"
 description = "Streamlit app demonstrating external script interaction with Pydantic."
 readme = "README.md"
 requires-python = ">=3.11"
-# Add dependencies if needed for build systems, but requirements.txt is primary for runtime
-# dependencies = [
-#     "streamlit>=1.25.0",
-#     "pydantic>=2.0.0",
-#     "structlog>=23.0.0",
-# ]
 
 [tool.ruff]
 # Assume Python 3.11
@@ -46,8 +40,3 @@ reportUnusedVariable = "warning"
 pythonVersion = "3.11"
 pythonPlatform = "All"
 
-# NOTE: Removed venvPath, venv, and useLibraryCodeForTypes.
-# Relying on Pyright being run within the activated virtual environment.
-
-# Use strict type checking mode if desired
-# typeCheckingMode = "strict"

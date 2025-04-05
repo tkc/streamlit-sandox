@@ -1,103 +1,97 @@
-import uuid  # Import uuid for generating processing ID
+import uuid
+from datetime import datetime
 
 import streamlit as st
-import structlog  # type: ignore # Import structlog for contextvars
-from pydantic import (
-    ValidationError,  # Keep for potential direct validation if needed later
-)
+from pydantic import ValidationError
 
-from greet import generate_greeting  # Import function directly from greet within src
-from logger import configure_logging  # Import logging config function from logger.py
-from model import GreetingOutput  # Import from model within src
+from greet import generate_greeting
+from logger import configure_logging
+from model import GreetingOutput
 
-# --- Logging Configuration ---
-log = configure_logging("app.log") # Configure and get logger
-# --- End Logging Configuration ---
+log = configure_logging("app.log")
+log.info("アプリケーション開始")
 
-log.info("Streamlit app started")
+def main():
+    """Streamlitアプリのメイン関数"""
+    # アプリのタイトルと説明
+    st.title("外部スクリプト連携アプリ")
+    st.write(
+        "下のフォームにメッセージを入力し、ボタンを押すと "
+        "`greet.py` スクリプトが実行され、その結果が表示されます。"
+    )
 
-st.title("外部スクリプト連携アプリ (Pydantic)")
-st.write(
-    "下のフォームにメッセージを入力し、ボタンを押すと "
-    "`greet.py` スクリプトが実行され、その結果が表示されます。"
-)
+    # 入力フォーム
+    with st.form("greet_form"):
+        message_input = st.text_input("メッセージを入力してください", "World")
+        submitted = st.form_submit_button("greet.py を実行")
 
-# 入力フォーム
-with st.form("greet_form"):
-    message_input = st.text_input("メッセージを入力してください", "World")
-    submitted = st.form_submit_button("greet.py を実行")
-
+    # フォーム送信時の処理
     if submitted:
-        processing_id = str(uuid.uuid4())
-        structlog.contextvars.bind_contextvars(processing_id=processing_id)
-        # Log will now include processing_id
-        log.info("Form submitted", message=message_input)
-        st.write("---")
-        st.subheader("`greet.py` の実行結果:")
+        process_submission(message_input)
 
-        if not message_input:
-            log.warning("Empty message submitted") # Log will include processing_id
-            st.warning("メッセージを入力してください。")
-            structlog.contextvars.clear_contextvars() # Clear context if no message
-        else:
+def process_submission(message: str):
+    """フォーム送信の処理"""
+    # 処理IDの生成
+    processing_id = str(uuid.uuid4())
+    log.info("フォーム送信", message=message, processing_id=processing_id)
+
+    # メッセージの検証
+    if not message:
+        st.warning("メッセージを入力してください。")
+        return
+
+    # 処理の実行
+    with st.spinner("挨拶を生成中..."):
+        try:
+            # 外部関数の呼び出し
+            output_dict = generate_greeting(message, processing_id=processing_id)
+            status = output_dict.get("status", "")
+            log.info("結果受信", result_status=status, processing_id=processing_id)
+
+            # 結果の検証と表示
             try:
-                # Log includes processing_id
-                log.info(
-                    "Calling generate_greeting function",
-                    input_message=message_input,
-                )
-                # generate_greeting 関数を直接呼び出し、processing_id を渡す
-                output_dict = generate_greeting(
-                    message_input, processing_id=processing_id
-                )
-                # Log includes processing_id
-                log.info(
-                    "Received result from generate_greeting",
-                    result_status=output_dict.get("status"),
-                )
+                parsed_output = GreetingOutput.model_validate(output_dict)
+                log.info("結果検証成功", status=parsed_output.status, processing_id=processing_id)
 
-                # 結果を Pydantic モデルで検証 (generate_greeting が辞書を返すため)
-                try:
-                    parsed_output = GreetingOutput.model_validate(output_dict)
-                    log.info(
-                        "Successfully validated output from generate_greeting",
-                        status=parsed_output.status,
-                    )
+                # 挨拶の表示
+                st.markdown(f"### {parsed_output.greeting}")
 
-                    # 結果を表示
-                    st.success(f"ステータス: {parsed_output.status}")
-                    # Handle potential datetime string from model_dump(mode='json')
-                    timestamp_str = (
-                        parsed_output.timestamp.isoformat()
-                        if hasattr(parsed_output.timestamp, "isoformat")
-                        else str(parsed_output.timestamp)
-                    )
-                    st.write(f"タイムスタンプ: {timestamp_str}")
-                    st.write(f"入力メッセージ: {parsed_output.input_message}")
-                    st.write(f"挨拶: {parsed_output.greeting}")
-                    st.caption(f"実行 Python: {parsed_output.python_version}")
-                    if parsed_output.error_message:
-                        log.warning(
-                            "generate_greeting reported an error",
-                            error_message=parsed_output.error_message,
-                        )
-                        st.error(f"処理エラー: {parsed_output.error_message}")
+                # 詳細情報の表示
+                st.success(f"ステータス: {parsed_output.status}")
+                    
+                # タイムスタンプのフォーマット
+                formatted_timestamp = format_timestamp(parsed_output.timestamp)
+                st.write(f"タイムスタンプ: {formatted_timestamp}")
+                st.write(f"入力メッセージ: {parsed_output.input_message}")
+                st.caption(f"実行 Python: {parsed_output.python_version}")
 
-                except ValidationError as e:
-                    log.error(
-                        "Pydantic validation failed for generate_greeting output",
-                        error=str(e),
-                        raw_output=output_dict,
-                        exc_info=True,
-                    )
-                    st.error("処理結果の形式が無効です (Pydantic 検証エラー):")
-                    st.json(output_dict) # 元の辞書を表示
-                    st.code(str(e), language="") # 検証エラー詳細
+                # エラーメッセージの表示
+                if parsed_output.error_message:
+                    st.error(f"処理エラー: {parsed_output.error_message}")
 
-            except Exception as e:
-                # Log includes processing_id
-                log.exception("Unexpected error occurred calling generate_greeting")
-                st.error(f"予期せぬエラーが発生しました: {e}")
-            finally:
-                # Ensure context is cleared regardless of success or failure
-                structlog.contextvars.clear_contextvars()
+            except ValidationError as e:
+                log.error("検証エラー", error=str(e), raw_output=output_dict, processing_id=processing_id)
+                st.error("処理結果の形式が無効です:")
+                st.json(output_dict)
+                st.code(str(e))
+
+        except Exception as e:
+            log.exception("予期せぬエラー", processing_id=processing_id)
+            st.error(f"予期せぬエラーが発生しました: {e}")
+
+def format_timestamp(timestamp):
+    """タイムスタンプを適切にフォーマット"""
+    if isinstance(timestamp, datetime):
+        return timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    elif isinstance(timestamp, str):
+        # 文字列の場合はパースを試みる
+        try:
+            timestamp_dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            return timestamp_dt.strftime('%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return timestamp
+    else:
+        return str(timestamp)
+
+if __name__ == "__main__":
+    main()

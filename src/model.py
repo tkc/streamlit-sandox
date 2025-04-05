@@ -14,4 +14,4 @@ class GreetingOutput(BaseModel):
     greeting: str
     python_version: str = Field(default=sys.version)
     status: str = "success"
-    error_message: Union[str, None] = None 
+    error_message: Union[str, None] = None

@@ -1,0 +1,8 @@
+{
+  "include": ["src"],
+  "stubPath": "./typings",
+  "reportUnknownMemberType": "none",
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic"
+}
