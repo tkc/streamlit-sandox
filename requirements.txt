@@ -1,0 +1,11 @@
+streamlit>=1.25.0
+pandas>=1.5.0
+numpy>=1.24.0
+plotly>=5.14.0
+pydantic>=2.0.0
+structlog>=23.0.0 # ログ出力用 (型ヒント同梱)
+
+# Development Tools (Install these within the virtual environment)
+# ruff>=0.1.0 # Linter & Formatter
+pyright>=1.1.300 # Type checker (Uncommented to install in venv)
+# ultimate-visualizer>=0.1.0 - PyPIに見つからないためコメントアウト

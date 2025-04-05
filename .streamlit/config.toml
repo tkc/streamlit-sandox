@@ -1,0 +1,3 @@
+[client]
+# ツールバーのモードを最小限に設定し、Deployボタンなどを非表示にする
+toolbarMode = "minimal"

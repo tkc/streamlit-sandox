@@ -1,0 +1,53 @@
+[project]
+name = "streamlit-sandbox"
+version = "0.1.0"
+description = "Streamlit app demonstrating external script interaction with Pydantic."
+readme = "README.md"
+requires-python = ">=3.11"
+# Add dependencies if needed for build systems, but requirements.txt is primary for runtime
+# dependencies = [
+#     "streamlit>=1.25.0",
+#     "pydantic>=2.0.0",
+#     "structlog>=23.0.0",
+# ]
+
+[tool.ruff]
+# Assume Python 3.11
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+# Enable common rules including pyflakes, pycodestyle, isort
+select = ["E", "F", "W", "I"]
+ignore = []
+
+[tool.ruff.format]
+# Use black formatting style
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pyright]
+# Define source directory
+include = ["src"]
+exclude = ["**/__pycache__", ".venv"]
+
+# Report missing imports
+reportMissingImports = true
+# Report missing type stubs for libraries
+reportMissingTypeStubs = false # Set to true for stricter checking if desired
+# Report usage of unknown members (variables, functions)
+reportUnknownMemberType = "warning"
+# Report usage of variables before assignment
+reportUnusedVariable = "warning"
+
+# Define Python version
+pythonVersion = "3.11"
+pythonPlatform = "All"
+
+# NOTE: Removed venvPath, venv, and useLibraryCodeForTypes.
+# Relying on Pyright being run within the activated virtual environment.
+
+# Use strict type checking mode if desired
+# typeCheckingMode = "strict"

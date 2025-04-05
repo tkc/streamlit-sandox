@@ -1,0 +1,30 @@
+# Git files
+.git
+.gitignore
+
+# Python cache and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Documentation / Local scripts / Logs
+memory-bank/
+run.sh
+README.md
+log/
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Editor/OS files
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
