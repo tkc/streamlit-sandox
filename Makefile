@@ -7,11 +7,21 @@ HOST_PORT := 8501
 CONTAINER_PORT := 8501
 LOG_DIR := $(shell pwd)/log
 
+# Detect OS for platform-specific commands
+OS := $(shell uname -s)
+ifeq ($(OS),Darwin)
+	ACTIVATE_CMD := source .venv/bin/activate
+else ifeq ($(OS),Linux)
+	ACTIVATE_CMD := source .venv/bin/activate
+else
+	ACTIVATE_CMD := .\.venv\Scripts\activate
+endif
+
 # Default target
 .DEFAULT_GOAL := help
 
 # Targets
-.PHONY: help build run run-local stop rm logs lint typecheck clean all
+.PHONY: help build run run-local stop rm logs lint typecheck clean all setup
 
 help: ## Display this help message
 	@echo "Usage: make [target]"
@@ -62,6 +72,17 @@ lint: ## Run ruff linter and formatter check
 typecheck: ## Run pyright type checker
 	@echo "Running pyright type check..."
 	@uv run pyright src
+
+setup: ## Setup development environment with uv
+	@echo "Setting up development environment using uv..."
+	@command -v uv >/dev/null 2>&1 || { echo "uv is not installed. Installing uv..."; pip install uv; }
+	@echo "Creating virtual environment..."
+	@uv venv .venv
+	@echo "Installing dependencies..."
+	@uv pip install -r requirements.txt
+	@echo "Installing development dependencies..."
+	@uv pip install ruff pyright
+	@echo "Setup complete! Activate the virtual environment with: $(ACTIVATE_CMD)"
 
 clean: ## Remove the built Docker image
 	@echo "Removing Docker image: $(IMAGE_NAME)..."
