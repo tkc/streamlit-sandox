@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class GreetingInput(BaseModel):
     message: str
 
+
 class GreetingOutput(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     input_message: str

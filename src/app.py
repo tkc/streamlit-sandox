@@ -4,12 +4,13 @@ from datetime import datetime
 import streamlit as st
 from pydantic import ValidationError
 
-from greet import generate_greeting
-from logger import configure_logging
-from model import GreetingOutput
+from src.greet import generate_greeting
+from src.logger import configure_logging
+from src.model import GreetingOutput
 
 log = configure_logging("app.log")
 log.info("アプリケーション開始")
+
 
 def main():
     """Streamlitアプリのメイン関数"""
@@ -28,6 +29,7 @@ def main():
     # フォーム送信時の処理
     if submitted:
         process_submission(message_input)
+
 
 def process_submission(message: str):
     """フォーム送信の処理"""
@@ -51,14 +53,18 @@ def process_submission(message: str):
             # 結果の検証と表示
             try:
                 parsed_output = GreetingOutput.model_validate(output_dict)
-                log.info("結果検証成功", status=parsed_output.status, processing_id=processing_id)
+                log.info(
+                    "結果検証成功",
+                    status=parsed_output.status,
+                    processing_id=processing_id,
+                )
 
                 # 挨拶の表示
                 st.markdown(f"### {parsed_output.greeting}")
 
                 # 詳細情報の表示
                 st.success(f"ステータス: {parsed_output.status}")
-                    
+
                 # タイムスタンプのフォーマット
                 formatted_timestamp = format_timestamp(parsed_output.timestamp)
                 st.write(f"タイムスタンプ: {formatted_timestamp}")
@@ -70,7 +76,12 @@ def process_submission(message: str):
                     st.error(f"処理エラー: {parsed_output.error_message}")
 
             except ValidationError as e:
-                log.error("検証エラー", error=str(e), raw_output=output_dict, processing_id=processing_id)
+                log.error(
+                    "検証エラー",
+                    error=str(e),
+                    raw_output=output_dict,
+                    processing_id=processing_id,
+                )
                 st.error("処理結果の形式が無効です:")
                 st.json(output_dict)
                 st.code(str(e))
@@ -79,19 +90,21 @@ def process_submission(message: str):
             log.exception("予期せぬエラー", processing_id=processing_id)
             st.error(f"予期せぬエラーが発生しました: {e}")
 
+
 def format_timestamp(timestamp):
     """タイムスタンプを適切にフォーマット"""
     if isinstance(timestamp, datetime):
-        return timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        return timestamp.strftime("%Y-%m-%d %H:%M:%S")
     elif isinstance(timestamp, str):
         # 文字列の場合はパースを試みる
         try:
-            timestamp_dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-            return timestamp_dt.strftime('%Y-%m-%d %H:%M:%S')
+            timestamp_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            return timestamp_dt.strftime("%Y-%m-%d %H:%M:%S")
         except ValueError:
             return timestamp
     else:
         return str(timestamp)
+
 
 if __name__ == "__main__":
     main()

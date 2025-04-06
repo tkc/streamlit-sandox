@@ -6,6 +6,7 @@ import structlog  # type: ignore
 
 LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "log")
 
+
 def configure_logging(log_file_name="app.log"):
     """
     structlog を設定し、ロガーオブジェクトを返す関数。
@@ -24,7 +25,7 @@ def configure_logging(log_file_name="app.log"):
 
     logging.basicConfig(
         format="%(message)s",
-        stream=sys.stdout, # Default to stdout, handlers will manage destinations
+        stream=sys.stdout,  # Default to stdout, handlers will manage destinations
         level=logging.INFO,
     )
 
@@ -40,9 +41,7 @@ def configure_logging(log_file_name="app.log"):
                 }
             ),
             structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.processors.TimeStamper(
-                fmt="%Y-%m-%d %H:%M:%S.%f", utc=False
-            ),
+            structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S.%f", utc=False),
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
@@ -53,7 +52,7 @@ def configure_logging(log_file_name="app.log"):
 
     # Define formatter using ConsoleRenderer for readability in both console and file
     formatter = structlog.stdlib.ProcessorFormatter(
-        processor=structlog.dev.ConsoleRenderer(colors=False), # No colors in file
+        processor=structlog.dev.ConsoleRenderer(colors=False),  # No colors in file
         foreign_pre_chain=structlog.get_config()["processors"],
     )
 
@@ -62,7 +61,7 @@ def configure_logging(log_file_name="app.log"):
     handler_stdout.setFormatter(formatter)
 
     # File handler (using the same formatter)
-    handler_file = logging.FileHandler(log_file_path, encoding='utf-8')
+    handler_file = logging.FileHandler(log_file_path, encoding="utf-8")
     handler_file.setFormatter(formatter)
 
     # Get the root logger, remove existing handlers, and add configured ones
@@ -73,6 +72,6 @@ def configure_logging(log_file_name="app.log"):
 
     root_logger.addHandler(handler_stdout)
     root_logger.addHandler(handler_file)
-    root_logger.setLevel(logging.INFO) # Set root logger level
+    root_logger.setLevel(logging.INFO)  # Set root logger level
 
     return structlog.get_logger()

@@ -1,11 +1,12 @@
 import time
 
-import structlog 
+import structlog
 from pydantic import ValidationError
 
-from model import GreetingInput, GreetingOutput  # Import from model within src
+from src.model import GreetingInput, GreetingOutput  # Import from model within src
 
-log = structlog.get_logger(__name__) # Get logger by name
+log = structlog.get_logger(__name__)  # Get logger by name
+
 
 def generate_greeting(input_message: str, processing_id: str) -> dict:
     """
@@ -20,14 +21,14 @@ def generate_greeting(input_message: str, processing_id: str) -> dict:
     """
     structlog.contextvars.bind_contextvars(processing_id=processing_id)
     log.info("generate_greeting called", input_message=input_message)
-    input_msg_for_output = input_message # Use original input for output model
-    input_data_dict: dict = {} # Initialize dict for potential error logging
+    input_msg_for_output = input_message  # Use original input for output model
+    input_data_dict: dict = {}  # Initialize dict for potential error logging
 
     try:
         # Pydantic モデルで入力を検証 (辞書として渡す)
         try:
             log.debug("Attempting to validate input with Pydantic")
-            input_data_dict = {"message": input_message} # Assign here
+            input_data_dict = {"message": input_message}  # Assign here
             validated_input = GreetingInput.model_validate(input_data_dict)
             # Use validated message for processing if needed,
             # but keep original for output
@@ -48,24 +49,24 @@ def generate_greeting(input_message: str, processing_id: str) -> dict:
         greeting_msg = (
             f"こんにちは、{processing_message}さん！ greet.py からのメッセージです。"
         )
-        time.sleep(0.5) # 少し待機
+        time.sleep(0.5)  # 少し待機
 
         # Pydantic モデルを使用して出力データを作成
         log.debug("Creating output data model")
         output_data = GreetingOutput(
-            input_message=input_msg_for_output, # Use original input here
-            greeting=greeting_msg
+            input_message=input_msg_for_output,  # Use original input here
+            greeting=greeting_msg,
         )
         log.info("Successfully created output data")
         # Return the model dump (dictionary)
         # Use mode='json' for datetime serialization
         result_dict = output_data.model_dump(mode="json")
-        structlog.contextvars.clear_contextvars() # Clear context on success
+        structlog.contextvars.clear_contextvars()  # Clear context on success
         return result_dict
 
     except ValueError as e:
-         # Pydantic 検証エラーなど、他の ValueError
-         # Log includes processing_id
+        # Pydantic 検証エラーなど、他の ValueError
+        # Log includes processing_id
         log.error(
             "ValueError during processing (likely validation)",
             error=str(e),
@@ -76,10 +77,10 @@ def generate_greeting(input_message: str, processing_id: str) -> dict:
             input_message=input_msg_for_output,
             greeting="エラーが発生しました。",
             status="error",
-            error_message=str(e)
+            error_message=str(e),
         )
         result_dict = error_output.model_dump(mode="json")
-        structlog.contextvars.clear_contextvars() # Clear context on error
+        structlog.contextvars.clear_contextvars()  # Clear context on error
         return result_dict
     except Exception as e:
         # Log includes processing_id
@@ -91,6 +92,5 @@ def generate_greeting(input_message: str, processing_id: str) -> dict:
             error_message=f"予期せぬエラーが発生しました: {str(e)}",
         )
         result_dict = error_output.model_dump(mode="json")
-        structlog.contextvars.clear_contextvars() # Clear context on exception
+        structlog.contextvars.clear_contextvars()  # Clear context on exception
         return result_dict
-

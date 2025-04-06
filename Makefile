@@ -80,6 +80,7 @@ lint: ## Run ruff linter and formatter
 	@uv run python -m ruff check src
 	@echo "Running ruff format..."
 	@uv run python -m ruff format src
+	@uv run mypy .
 
 typecheck: ## Run pyright type checker
 	@echo "Running pyright type check..."
