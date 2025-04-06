@@ -1,5 +1,3 @@
-# Makefile for Streamlit Sandbox Docker operations
-
 # Variables
 IMAGE_NAME := streamlit-sandbox
 CONTAINER_NAME := streamlit-sandbox-container
@@ -21,13 +19,34 @@ endif
 .DEFAULT_GOAL := help
 
 # Targets
-.PHONY: help build run run-local stop rm logs lint typecheck clean all setup
+.PHONY: help build run run-local stop rm logs lint typecheck clean all setup sync lock update test clean-all
 
 help: ## Display this help message
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+setup: ## Setup development environment with uv
+	@echo "Setting up development environment using uv..."
+	@pip install -U uv
+	@echo "Creating virtual environment..."
+	@uv venv -f .venv
+	@echo "Installing dependencies including development packages..."
+	@uv sync --reinstall
+	@echo "Setup complete! Activate the virtual environment with: $(ACTIVATE_CMD)"
+
+sync: ## Sync project dependencies to latest locked versions
+	@echo "Syncing dependencies..."
+	@uv sync
+
+lock: ## Update lockfile with latest compatible dependencies
+	@echo "Updating lockfile..."
+	@uv lock
+
+update: ## Update all dependencies to latest versions
+	@echo "Upgrading all dependencies..."
+	@uv lock --upgrade
 
 build: ## Build the Docker image
 	@echo "Building Docker image: $(IMAGE_NAME)..."
@@ -46,47 +65,39 @@ run: ## Run the Docker container (background, logs mounted)
 
 run-local: ## Run the Streamlit app locally
 	@echo "Running Streamlit app locally..."
-	@echo "Ensure dependencies are installed: uv pip install -r requirements.txt"
 	@uv run streamlit run src/app.py
 
 stop: ## Stop the running Docker container
 	@echo "Stopping Docker container: $(CONTAINER_NAME)..."
 	@docker stop $(CONTAINER_NAME) || echo "Container not running or already stopped."
 
-# Note: 'run' uses --rm, so 'rm' target might not be strictly necessary if only 'run' is used.
-# Kept for cases where a container might be run without --rm.
-rm: ## Remove the stopped Docker container
-	@echo "Removing Docker container: $(CONTAINER_NAME)..."
-	@docker rm $(CONTAINER_NAME) || echo "Container not found or already removed."
-
 logs: ## View the logs of the running container
 	@echo "Viewing logs for container: $(CONTAINER_NAME)..."
 	@docker logs -f $(CONTAINER_NAME)
 
-lint: ## Run ruff linter and formatter check
+lint: ## Run ruff linter and formatter
 	@echo "Running ruff check..."
-	@uv run ruff check src
-	@echo "Running ruff format check..."
-	@uv run ruff format --check src
+	@uv run python -m ruff check src
+	@echo "Running ruff format..."
+	@uv run python -m ruff format src
 
 typecheck: ## Run pyright type checker
 	@echo "Running pyright type check..."
 	@uv run pyright src
 
-setup: ## Setup development environment with uv
-	@echo "Setting up development environment using uv..."
-	@command -v uv >/dev/null 2>&1 || { echo "uv is not installed. Installing uv..."; pip install uv; }
-	@echo "Creating virtual environment..."
-	@uv venv .venv
-	@echo "Installing dependencies..."
-	@uv pip install -r requirements.txt
-	@echo "Installing development dependencies..."
-	@uv pip install ruff pyright
-	@echo "Setup complete! Activate the virtual environment with: $(ACTIVATE_CMD)"
+test: ## Run tests with pytest
+	@echo "Running tests..."
+	@uv run python -m pytest tests
 
-clean: ## Remove the built Docker image
+clean: ## Clean up environment and temporary files
+	@echo "Cleaning up..."
+	@rm -rf __pycache__ .pytest_cache .ruff_cache
 	@echo "Removing Docker image: $(IMAGE_NAME)..."
-	@docker rmi $(IMAGE_NAME) || echo "Image not found or already removed."
+	@docker rmi $(IMAGE_NAME) 2>/dev/null || echo "Image not found or already removed."
+
+clean-all: clean ## Deep clean - removes virtual environment and lock files
+	@echo "Deep cleaning..."
+	@rm -rf .venv uv.lock
 
 all: build run ## Build the image and run the container
 

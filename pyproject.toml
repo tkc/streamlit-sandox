@@ -1,42 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "streamlit-sandbox"
 version = "0.1.0"
-description = "Streamlit app demonstrating external script interaction with Pydantic."
+authors = [
+  { name = "Takeshi Iijima", email = "example@example.com" },
+]
+description = "Streamlit application sandbox"
 readme = "README.md"
 requires-python = ">=3.11"
+dependencies = [
+  "streamlit>=1.25.0",
+  "pandas>=1.5.0",
+  "numpy>=1.24.0",
+  "plotly>=5.14.0",
+  "pydantic>=2.0.0",
+  "structlog>=21.0.0",
+  "uuid>=1.30",
+]
 
-[tool.ruff]
-# Assume Python 3.11
-target-version = "py311"
-line-length = 88
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.1.0",
+  "pyright>=1.1.0",
+  "pytest>=7.0.0",
+]
 
-[tool.ruff.lint]
-# Enable common rules including pyflakes, pycodestyle, isort
-select = ["E", "F", "W", "I"]
-ignore = []
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
-[tool.ruff.format]
-# Use black formatting style
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
-
-[tool.pyright]
-# Define source directory
-include = ["src"]
-exclude = ["**/__pycache__", ".venv"]
-
-# Report missing imports
-reportMissingImports = true
-# Report missing type stubs for libraries
-reportMissingTypeStubs = false # Set to true for stricter checking if desired
-# Report usage of unknown members (variables, functions)
-reportUnknownMemberType = "warning"
-# Report usage of variables before assignment
-reportUnusedVariable = "warning"
-
-# Define Python version
-pythonVersion = "3.11"
-pythonPlatform = "All"
 

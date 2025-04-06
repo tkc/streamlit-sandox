@@ -15,7 +15,6 @@ venv/
 # Documentation / Local scripts / Logs
 memory-bank/
 run.sh
-README.md
 log/
 
 # Docker files
