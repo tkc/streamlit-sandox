@@ -9,11 +9,12 @@ from src.logger import configure_logging
 from src.model import GreetingOutput
 
 log = configure_logging("app.log")
-log.info("アプリケーション開始")
 
 
-def main():
-    """Streamlitアプリのメイン関数"""
+# --- 画面ごとの関数 ---
+def render_greeting_page():
+    """挨拶生成画面のレンダリング"""
+    log.info("挨拶生成画面表示")
     # アプリのタイトルと説明
     st.title("外部スクリプト連携アプリ")
     st.write(
@@ -31,8 +32,16 @@ def main():
         process_submission(message_input)
 
 
+def render_other_page():
+    """別の画面のレンダリング（ダミー）"""
+    log.info("別画面表示")
+    st.title("別の画面")
+    st.write("ここは別の画面です。")
+
+
+# --- 共通関数 ---
 def process_submission(message: str):
-    """フォーム送信の処理"""
+    """フォーム送信の処理 (render_greeting_pageから呼び出される)"""
     # 処理IDの生成
     processing_id = str(uuid.uuid4())
     log.info("フォーム送信", message=message, processing_id=processing_id)
@@ -107,4 +116,15 @@ def format_timestamp(timestamp):
 
 
 if __name__ == "__main__":
-    main()
+    log.info("アプリケーション開始")
+
+    # --- サイドバーでの画面選択 ---
+    st.sidebar.title("画面選択")
+    page_options = ["挨拶生成", "別の画面"]
+    selected_page = st.sidebar.radio("表示する画面を選んでください", page_options)
+
+    # --- 選択された画面の表示 ---
+    if selected_page == "挨拶生成":
+        render_greeting_page()
+    elif selected_page == "別の画面":
+        render_other_page()
